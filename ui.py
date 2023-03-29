@@ -10,15 +10,20 @@ class App(ui.CTk):
         self.title("Расчет оптического кабеля")
         self.minsize(width=700, height=400)
 
-        self.file_name = None
-        self.file_content = None
+        self.file_content = list()
 
         # left screen part
         self.left_buttons = ui.CTkFrame(self)
         self.left_buttons.pack(
-            padx=10, pady=10,
-            ipadx=20, ipady=20,
+            padx=10, pady=10, ipadx=20, ipady=20,
             side=ui.LEFT, fill="both",
+        )
+
+        # right screen part
+        self.right_loc_list = ui.CTkScrollableFrame(self)
+        self.right_loc_list.pack(
+            padx=10, pady=10, side=ui.RIGHT,
+            fill="both", expand=True,
         )
 
         # left top half
@@ -48,35 +53,30 @@ class App(ui.CTk):
             side=ui.BOTTOM, fill="both", expand=True,
         )
 
-        self.count_button = ui.CTkButton(
+        self.result_button = ui.CTkButton(
             self.result_bottom_half, text="Рассчитать",
-            command=self.count,
+            command=self.count_result,
         )
-        self.count_button.pack(expand=True)
+        self.result_button.pack(expand=True)
 
         self.result_label = ui.CTkLabel(
             self.result_bottom_half, text="0.0 метров",
         )
         self.result_label.pack(expand=True)
 
-        # right screen part
-        self.right_loc_list = ui.CTkScrollableFrame(self)
-        self.right_loc_list.pack(padx=10, pady=10, side=ui.RIGHT, fill="both", expand=True)
-
-    def count(self):
+    def count_result(self):
         length, points = logic(self.file_content)
         self.result_label.configure(text=str(length))
 
         [child.destroy() for child in self.right_loc_list.winfo_children()]
-        for (point, line) in zip(points, self.file_content):
-            lat, lon, level = point
-            text = f'{line.strip()}\n\n' \
-                   f'Широта: {lat:.3f}    ' \
-                   f'Долгота: {lon:.3f}    ' \
-                   f'Этажей: {level}'
+        for point in points:
+            text = f'{point.address}\n\n' \
+                   f'Широта: {point.latitude:.3f}    ' \
+                   f'Долгота: {point.longitude:.3f}    ' \
+                   f'Этажей: {point.level}'
             child = ui.CTkButton(
                 self.right_loc_list, text=text, border_spacing=10,
-                state=ui.DISABLED, text_color_disabled="white", fg_color="grey32"
+                state=ui.DISABLED, text_color_disabled="white", fg_color="grey32",
             )
             child.pack(padx=10, pady=10, fill="both")
 
@@ -100,6 +100,6 @@ class App(ui.CTk):
         for line in self.file_content:
             child = ui.CTkButton(
                 self.right_loc_list, text=line.strip(), border_spacing=10,
-                state=ui.DISABLED, text_color_disabled="white", fg_color="grey32"
+                state=ui.DISABLED, text_color_disabled="white", fg_color="grey32",
             )
             child.pack(padx=10, pady=10, fill="both")

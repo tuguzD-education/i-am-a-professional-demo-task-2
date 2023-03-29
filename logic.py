@@ -1,14 +1,24 @@
+from dataclasses import dataclass
 from itertools import combinations
 
 import requests
 
 
+@dataclass
+class Point:
+    address: str
+    latitude: float
+    longitude: float
+    level: int
+
+
 def logic(lines: list[str]):
-    points: list[tuple[float, float, int]] = []
+    points: list[Point] = []
 
     print('Получаем данные...')
     for line in lines:
-        query = line.strip().replace('.', '').replace(',', '').replace('д', '').split()
+        line = line.strip()
+        query = line.replace('.', '').replace(',', '').replace('д', '').split()
         query = '+'.join(query)
         params = dict(q=query, format='json', extratags=1, limit=40)
         request = requests.get('https://nominatim.openstreetmap.org/search.php', params=params)
@@ -22,18 +32,18 @@ def logic(lines: list[str]):
             level = int(extratags['building:levels'])
             lat = float(result['lat'])
             lon = float(result['lon'])
-            point = (float(lat), float(lon), level)
+            point = Point(line, lat, lon, level)
             points.append(point)
             break
 
     length = 0
     for point in points:
-        _, _, level = point
+        level = point.level
         print(f"Заложенная высота: {level} * 3 * 2 = {level * 3 * 2}")
         length += level * 3 * 2
     for first, second in combinations(points, 2):
-        lat1, lon1, _ = first
-        lat2, lon2, _ = second
+        lat1, lon1 = first.latitude, first.longitude
+        lat2, lon2 = second.latitude, second.longitude
         distance = (abs(lat1 - lat2) + abs(lon1 - lon2)) * 111.3 * 1000
         print(
             f"Первая точка: {lat1}, {lon1}\n"
@@ -41,6 +51,6 @@ def logic(lines: list[str]):
             f"Дистанция: {distance}\n"
         )
         length += distance
-    print(f'Длина кабеля: {length} метров')
 
+    print(f'Длина кабеля: {length} метров')
     return f'{length:.5f} метров', points
